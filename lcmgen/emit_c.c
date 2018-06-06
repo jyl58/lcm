@@ -98,15 +98,27 @@ static void emit_header_top(lcmgen_t *lcm, FILE *f, char *name)
 {
     emit_auto_generated_warning(f);
 
+    fprintf(f, "#ifndef _%s_h\n", name);
+    fprintf(f, "#define _%s_h\n", name);
+    fprintf(f, "\n");
+
     fprintf(f, "#include <stdint.h>\n");
     fprintf(f, "#include <stdlib.h>\n");
-    fprintf(f, "#include <lcm/lcm_coretypes.h>\n");
+    if(getopt_get_bool(lcm->gopt, "use-quotes-for-includes"))
+        fprintf(f, "#include \"lcm/lcm_coretypes.h\"\n");
+    else
+        fprintf(f, "#include <lcm/lcm_coretypes.h>\n");
+
 //    fprintf(f, "#include \"%s%slcm_lib.h\"\n",
 //            getopt_get_string(lcm->gopt, "cinclude"),
 //            strlen(getopt_get_string(lcm->gopt, "cinclude"))>0 ? "/" : "");
 
     if(!getopt_get_bool(lcm->gopt, "c-no-pubsub")) {
-        fprintf(f, "#include <lcm/lcm.h>\n");
+        if(getopt_get_bool(lcm->gopt, "use-quotes-for-includes"))
+            fprintf(f, "#include \"lcm/lcm.h\"\n");
+        else
+            fprintf(f, "#include <lcm/lcm.h>\n");
+
     }
     if(strlen(getopt_get_string(lcm->gopt, "c-export-include"))) {
         fprintf(f, "#include \"%s%s%s\"\n",
@@ -114,10 +126,6 @@ static void emit_header_top(lcmgen_t *lcm, FILE *f, char *name)
                 strlen(getopt_get_string(lcm->gopt, "cinclude"))>0 ? "/" : "",
                 getopt_get_string(lcm->gopt, "c-export-include"));
     }
-    fprintf(f, "\n");
-
-    fprintf(f, "#ifndef _%s_h\n", name);
-    fprintf(f, "#define _%s_h\n", name);
     fprintf(f, "\n");
 
     fprintf(f, "#ifdef __cplusplus\n");
@@ -391,7 +399,7 @@ static void emit_c_struct_get_hash(lcmgen_t *lcm, FILE *f, lcm_struct_t *ls)
     emit(0, "");
     emit(1, "__lcm_hash_ptr cp;");
     emit(1, "cp.parent =  p;");
-    emit(1, "cp.v = (void*)__%s_get_hash;", tn_);
+    emit(1, "cp.v = __%s_get_hash;", tn_);
     emit(1, "(void) cp;");
     emit(0, "");
     emit(1, "uint64_t hash = (uint64_t)0x%016"PRIx64"LL", ls->hash);
