@@ -5,6 +5,7 @@
 #                  [CPP_HEADERS <VARIABLE_NAME>
 #                   [CPP_INCLUDE <PATH>] [CPP11]]
 #                  [JAVA_SOURCES <VARIABLE_NAME>]
+#                  [CSHARP_SOURCES <VARIABLE_NAME>]
 #                  [PYTHON_SOURCES <VARIABLE_NAME>]
 #                  [LUA_SOURCES <VARIABLE_NAME>]
 #                  [GO_SOURCES <VARIABLE_NAME>]
@@ -176,6 +177,7 @@ function(lcm_wrap_types)
     C_HEADERS C_SOURCES C_INCLUDE C_EXPORT
     CPP_HEADERS CPP_INCLUDE
     JAVA_SOURCES
+    CSHARP_SOURCES
     PYTHON_SOURCES
     LUA_SOURCES
     GO_SOURCES
@@ -202,12 +204,13 @@ function(lcm_wrap_types)
   if(NOT DEFINED _C_HEADERS AND
      NOT DEFINED _CPP_HEADERS AND
      NOT DEFINED _JAVA_SOURCES AND
+     NOT DEFINED _CSHARP_SOURCES AND
      NOT DEFINED _PYTHON_SOURCES AND
      NOT DEFINED _LUA_SOURCES AND
      NOT DEFINED _GO_SOURCES)
     message(SEND_ERROR
       "lcm_wrap_types: at least one of C_HEADERS, CPP_HEADERS, JAVA_SOURCES,"
-      " PYTHON_SOURCES, LUA_SOURCES or GO_SOURCES is required")
+      " CSHARP_SOURCES, PYTHON_SOURCES, LUA_SOURCES or GO_SOURCES is required")
     return()
   endif()
 
@@ -250,6 +253,9 @@ function(lcm_wrap_types)
   if(DEFINED _JAVA_SOURCES)
     list(APPEND _args --java --jpath ${_DESTINATION})
   endif()
+  if(DEFINED _CSHARP_SOURCES)
+    list(APPEND _args --csharp --csharp-path ${_DESTINATION})
+  endif()
   if(DEFINED _PYTHON_SOURCES)
     list(APPEND _args --python --python-no-init --ppath ${_DESTINATION})
   endif()
@@ -270,6 +276,8 @@ function(lcm_wrap_types)
   foreach(_lcmtype ${_UNPARSED_ARGUMENTS})
     set(_package "")
     set(_outputs "")
+    set(_package_dir ".")
+    set(_package_pre "")
     # Read type definition
     file(READ ${_lcmtype} _text)
     # Strip comments
@@ -301,8 +309,13 @@ function(lcm_wrap_types)
 
         # Determine output file name(s) and add to output variables
         if(DEFINED _C_HEADERS AND DEFINED _C_SOURCES)
-          _lcm_add_outputs(_C_HEADERS ${_package_pre}_${_type}.h)
-          _lcm_add_outputs(_C_SOURCES ${_package_pre}_${_type}.c)
+          if(_package_pre STREQUAL "")
+            _lcm_add_outputs(_C_HEADERS ${_type}.h)
+            _lcm_add_outputs(_C_SOURCES ${_type}.c)
+          else()
+            _lcm_add_outputs(_C_HEADERS ${_package_pre}_${_type}.h)
+            _lcm_add_outputs(_C_SOURCES ${_package_pre}_${_type}.c)
+          endif()
           if(_CREATE_CPP_AGGREGATE_HEADER)
             _lcm_add_aggregate_include("${_package_dir}.h"
               "${_package_pre}_${_type}.h")
@@ -329,7 +342,18 @@ function(lcm_wrap_types)
           _lcm_add_go_outputs(_GO_SOURCES ${_package_dir}/${_type}.go)
         endif()
         if(DEFINED _JAVA_SOURCES)
-          _lcm_add_outputs(_JAVA_SOURCES ${_package_dir}/${_type}.java)
+          if(_package_dir STREQUAL ".")
+            _lcm_add_outputs(_JAVA_SOURCES lcmtypes/${_type}.java)
+          else()
+            _lcm_add_outputs(_JAVA_SOURCES ${_package_dir}/${_type}.java)
+          endif()
+        endif()
+        if(DEFINED _CSHARP_SOURCES)
+          if(_package_dir STREQUAL ".")
+            _lcm_add_outputs(_CSHARP_SOURCES LCMTypes/${_type}.cs)
+          else()  
+            _lcm_add_outputs(_CSHARP_SOURCES ${_package_dir}/${_type}.cs)
+          endif()
         endif()
       endif()
     endforeach()
@@ -361,6 +385,7 @@ function(lcm_wrap_types)
   _lcm_export(_C_HEADERS)
   _lcm_export(_CPP_HEADERS)
   _lcm_export(_JAVA_SOURCES)
+  _lcm_export(_CSHARP_SOURCES)
   _lcm_export(_PYTHON_SOURCES)
   _lcm_export(_LUA_SOURCES)
   _lcm_export(_GO_SOURCES)

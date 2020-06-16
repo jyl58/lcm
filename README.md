@@ -9,7 +9,7 @@ variety of programming languages.
 # Quick Links
 
 * [LCM downloads](https://github.com/lcm-proj/lcm/releases)
-* [Website and documentation](http://lcm-proj.github.io)
+* [Website and documentation](https://lcm-proj.github.io)
 
 # Features
 
@@ -37,3 +37,7 @@ variety of programming languages.
   * Lua
   * MATLAB
   * Python
+
+# Build Status (master)
+
+[![Build Status](https://travis-ci.com/lcm-proj/lcm.svg?branch=master)](https://travis-ci.com/lcm-proj/lcm)
